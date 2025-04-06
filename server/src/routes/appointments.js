@@ -1,51 +1,74 @@
 const express = require('express');
 const router = express.Router();
-
-// Placeholder for database model - you'll need to create this
-// const Appointment = require('../models/appointment');
+const Appointment = require('../models/appointment');
 
 // Get all appointments
-router.get('/', (req, res) => {
-  // Temporary response until database is connected
-  res.json([
-    {
-      _id: '1',
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
-      customerPhone: '555-123-4567',
-      service: 'haircut',
-      date: new Date('2025-04-15'),
-      time: '10:00 AM',
-      status: 'pending',
-      notes: 'First time customer',
-      createdAt: new Date()
-    }
-  ]);
+router.get('/', async (req, res) => {
+  try {
+    const appointments = await Appointment.findAll();
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching appointments', error: err.message });
+  }
 });
 
-// Create a new appointment
-router.post('/', (req, res) => {
-  // Temporary response until database is connected
-  res.status(201).json({
-    _id: Date.now().toString(),
-    ...req.body,
-    status: 'pending',
-    createdAt: new Date()
-  });
+// Get appointment by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    res.json(appointment);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching appointment', error: err.message });
+  }
+});
+
+// Create new appointment
+router.post('/', async (req, res) => {
+  try {
+    const newAppointment = await Appointment.create(req.body);
+    res.status(201).json(newAppointment);
+  } catch (err) {
+    res.status(400).json({ message: 'Error creating appointment', error: err.message });
+  }
 });
 
 // Update appointment status
-router.patch('/:id/status', (req, res) => {
-  res.json({
-    _id: req.params.id,
-    status: req.body.status,
-    updatedAt: new Date()
-  });
+router.patch('/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    if (!status || !['pending', 'confirmed', 'declined', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status value' });
+    }
+    
+    const updatedAppointment = await Appointment.updateStatus(req.params.id, status);
+    
+    if (!updatedAppointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    
+    res.json(updatedAppointment);
+  } catch (err) {
+    res.status(400).json({ message: 'Error updating appointment status', error: err.message });
+  }
 });
 
-// Delete an appointment
-router.delete('/:id', (req, res) => {
-  res.json({ message: 'Appointment deleted' });
+// Delete appointment
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await Appointment.delete(req.params.id);
+    
+    if (!deleted) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+    
+    res.json({ message: 'Appointment deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting appointment', error: err.message });
+  }
 });
 
 module.exports = router;
