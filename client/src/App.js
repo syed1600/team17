@@ -4,6 +4,7 @@ import AppointmentForm from './components/AppointmentForm';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import uiConfig from './config/uiConfig';
 
 // Wrap the main app content with the language provider
 function AppContent() {
@@ -63,20 +64,20 @@ function AppContent() {
   
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-blue-600 text-white shadow">
-        <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
-          <h1 className="text-2xl font-bold">Barbershop Appointments</h1>
+      <header className={uiConfig.colors.primary.default + " text-white shadow"}>
+        <div className={uiConfig.components.layout.container + " py-4 flex flex-wrap justify-between items-center"}>
+          <h1 className="text-2xl font-bold">{uiConfig.branding.name}</h1>
           
           <div className="flex items-center mt-2 md:mt-0">
             {/* Language Toggle Button */}
             <button 
               onClick={toggleLanguage}
-              className="px-3 py-1 mr-4 bg-white text-blue-600 rounded-full font-bold hover:bg-blue-100 transition-colors shadow-md"
+              className={uiConfig.languageToggle.button}
             >
               {language === 'en' ? t('switchToSpanish') : t('switchToEnglish')}
             </button>
             
-            <nav className="flex">
+            <nav className="flex ml-4">
               <button 
                 onClick={() => handleViewChange('booking')} 
                 className={`mr-4 hover:text-blue-200 transition-colors ${view === 'booking' ? 'font-bold underline' : ''}`}
@@ -111,14 +112,14 @@ function AppContent() {
         </div>
       </header>
       
-      <main className="container mx-auto px-4 py-8 flex-grow">
+      <main className={uiConfig.components.layout.container + " py-8 flex-grow"}>
         {view === 'booking' && <AppointmentForm />}
         {view === 'admin-login' && <AdminLogin onLogin={handleAdminLogin} />}
         {view === 'admin-dashboard' && isAdminAuthenticated && <AdminDashboard />}
       </main>
       
-      <footer className="bg-gray-800 text-white p-4">
-        <div className="container mx-auto px-4 text-center">
+      <footer className={uiConfig.colors.secondary.default + " text-white p-4"}>
+        <div className={uiConfig.components.layout.container + " text-center"}>
           <p>{t('copyright')}</p>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import uiConfig from '../config/uiConfig';
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
@@ -151,12 +152,12 @@ const AdminDashboard = () => {
 
   if (error) {
     return (
-      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+      <div className={uiConfig.components.alert.error + " border-l-4 border-red-500"}>
         <p className="font-bold">Error:</p>
         <p>{error}</p>
         <button 
           onClick={fetchAppointments}
-          className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          className={uiConfig.components.button.danger + " mt-4"}
         >
           {t('refresh')}
         </button>
@@ -167,7 +168,7 @@ const AdminDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Dashboard Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={uiConfig.components.layout.grid}>
         <div className="bg-blue-50 p-4 rounded-lg shadow border border-blue-100">
           <h3 className="text-lg font-semibold text-blue-800">Total Appointments</h3>
           <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
@@ -183,14 +184,14 @@ const AdminDashboard = () => {
       </div>
       
       {/* Appointment Management */}
-      <div className="bg-white shadow-md rounded-lg p-6">
+      <div className={uiConfig.components.card.default}>
         <div className="flex flex-wrap justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('appointmentManagement')}</h2>
           <div className="flex space-x-2">
             <select 
               value={filter} 
               onChange={(e) => setFilter(e.target.value)}
-              className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={uiConfig.components.input.default}
             >
               <option value="all">{t('allAppointments')}</option>
               <option value="pending">{t('pending')}</option>
@@ -200,7 +201,7 @@ const AdminDashboard = () => {
             </select>
             <button 
               onClick={fetchAppointments}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className={uiConfig.components.button.primary}
             >
               {t('refresh')}
             </button>
@@ -212,55 +213,52 @@ const AdminDashboard = () => {
             {t('noAppointments')}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
+          <div className={uiConfig.components.table.wrapper}>
+            <table className={uiConfig.components.table.table}>
               <thead>
-                <tr className="bg-gray-100">
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('customer')}</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('service')}</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('dateTime')}</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('status')}</th>
-                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('actions')}</th>
+                <tr className={uiConfig.components.table.header}>
+                  <th className={uiConfig.components.table.headerCell}>{t('customer')}</th>
+                  <th className={uiConfig.components.table.headerCell}>{t('service')}</th>
+                  <th className={uiConfig.components.table.headerCell}>{t('dateTime')}</th>
+                  <th className={uiConfig.components.table.headerCell}>{t('status')}</th>
+                  <th className={uiConfig.components.table.headerCell}>{t('actions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className={uiConfig.components.table.divider}>
                 {filteredAppointments.map((appointment) => (
-                  <tr key={appointment._id} className="hover:bg-gray-50">
-                    <td className="py-3 px-4">
+                  <tr key={appointment._id} className={uiConfig.components.table.row}>
+                    <td className={uiConfig.components.table.cell}>
                       <div className="font-medium">{appointment.customerName}</div>
                       <div className="text-sm text-gray-500">{appointment.customerEmail}</div>
                       <div className="text-sm text-gray-500">{appointment.customerPhone}</div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className={uiConfig.components.table.cell}>
                       {appointment.service}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className={uiConfig.components.table.cell}>
                       <div className="font-medium">{formatDate(appointment.date)}</div>
                       <div className="text-sm text-gray-500">{appointment.time}</div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className={uiConfig.components.table.cell}>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'declined' ? 'bg-red-100 text-red-800' :
-                        appointment.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                        'bg-yellow-100 text-yellow-800'
+                        uiConfig.colors.status[appointment.status] || ''
                       }`}>
                         {t(appointment.status)}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className={uiConfig.components.table.cell}>
                       <div className="flex flex-wrap gap-2">
                         {appointment.status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleStatusChange(appointment._id, 'confirmed')}
-                              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                              className={uiConfig.components.button.success + " " + uiConfig.components.button.small}
                             >
                               {t('confirm')}
                             </button>
                             <button
                               onClick={() => handleStatusChange(appointment._id, 'declined')}
-                              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                              className={uiConfig.components.button.danger + " " + uiConfig.components.button.small}
                             >
                               {t('decline')}
                             </button>
@@ -268,7 +266,7 @@ const AdminDashboard = () => {
                         )}
                         <button
                           onClick={() => handleDelete(appointment._id)}
-                          className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                          className={uiConfig.components.button.secondary + " " + uiConfig.components.button.small}
                         >
                           {t('delete')}
                         </button>

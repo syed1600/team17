@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import uiConfig from '../config/uiConfig';
 
 const AdminLogin = ({ onLogin }) => {
   const { t } = useLanguage();
@@ -27,11 +28,11 @@ const AdminLogin = ({ onLogin }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className={uiConfig.components.card.default + " max-w-md mx-auto"}>
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">{t('adminLoginTitle')}</h2>
       
       {error && (
-        <div className="p-3 mb-4 rounded bg-red-100 text-red-700">
+        <div className={uiConfig.components.alert.error}>
           {error}
         </div>
       )}
@@ -48,7 +49,7 @@ const AdminLogin = ({ onLogin }) => {
             value={credentials.username}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={uiConfig.components.input.default}
           />
         </div>
         
@@ -63,13 +64,13 @@ const AdminLogin = ({ onLogin }) => {
             value={credentials.password}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={uiConfig.components.input.default}
           />
         </div>
         
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          className={uiConfig.components.button.primary + " w-full"}
         >
           {t('login')}
         </button>

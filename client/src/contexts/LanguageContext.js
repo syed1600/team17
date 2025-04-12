@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
+import uiConfig from '../config/uiConfig';
 
 // Define translations
 const translations = {
@@ -57,7 +58,7 @@ const translations = {
     loading: 'Loading appointments...',
     
     // Footer
-    copyright: '© 2025 Barbershop Booking. All rights reserved.',
+    copyright: `© 2025 ${uiConfig.branding.companyName}. All rights reserved.`,
     
     // Language
     switchToSpanish: 'Español',
@@ -118,7 +119,7 @@ const translations = {
     loading: 'Cargando citas...',
     
     // Footer
-    copyright: '© 2025 Barbershop Booking. Todos los derechos reservados.',
+    copyright: `© 2025 ${uiConfig.branding.companyName}. Todos los derechos reservados.`,
     
     // Language
     switchToSpanish: 'Español',
