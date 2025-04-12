@@ -1,85 +1,92 @@
 const mongoose = require('mongoose');
 
-// Simple schema since we're not using MongoDB yet
-const appointmentSchema = {
-  _id: String,
-  customerName: String,
-  customerEmail: String,
-  customerPhone: String,
-  service: String,
-  date: Date,
-  time: String,
-  status: String,
-  notes: String,
-  createdAt: Date
-};
-
-// In-memory store for appointments
-let appointments = [
-  {
-    _id: '1',
-    customerName: 'John Doe',
-    customerEmail: 'john@example.com',
-    customerPhone: '(555) 123-4567',
-    service: 'haircut',
-    date: new Date('2025-04-15'),
-    time: '10:00 AM',
-    status: 'pending',
-    notes: 'First time customer',
-    createdAt: new Date()
+// Define the MongoDB schema
+const appointmentSchema = new mongoose.Schema({
+  customerName: {
+    type: String,
+    required: true
   },
-  {
-    _id: '2',
-    customerName: 'Jane Smith',
-    customerEmail: 'jane@example.com',
-    customerPhone: '(555) 987-6543',
-    service: 'haircut-and-beard',
-    date: new Date('2025-04-16'),
-    time: '2:00 PM',
-    status: 'confirmed',
-    notes: '',
-    createdAt: new Date()
+  customerEmail: {
+    type: String,
+    required: true
+  },
+  customerPhone: {
+    type: String,
+    required: true
+  },
+  service: {
+    type: String,
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  },
+  time: {
+    type: String,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'declined', 'cancelled'],
+    default: 'pending'
+  },
+  notes: {
+    type: String,
+    default: ''
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-];
+});
 
-// Model methods
-const Appointment = {
-  findAll: () => {
-    return Promise.resolve([...appointments]);
-  },
+// Try to create a MongoDB model
+let AppointmentModel;
+try {
+  AppointmentModel = mongoose.model('Appointment', appointmentSchema);
+  console.log('Using MongoDB for appointment storage');
+} catch (err) {
+  console.error('Error creating MongoDB model:', err);
   
-  findById: (id) => {
-    const appointment = appointments.find(a => a._id === id);
-    return Promise.resolve(appointment || null);
-  },
+  // Fallback to in-memory model
+  console.log('Falling back to in-memory appointment storage');
   
-  create: (appointmentData) => {
-    const newAppointment = {
-      _id: Date.now().toString(),
-      ...appointmentData,
-      status: 'pending',
-      createdAt: new Date()
-    };
+  // In-memory store
+  const appointments = [];
+  let nextId = 1;
+  
+  AppointmentModel = {
+    appointments,
     
-    appointments.push(newAppointment);
-    return Promise.resolve(newAppointment);
-  },
-  
-  updateStatus: (id, status) => {
-    const index = appointments.findIndex(a => a._id === id);
-    if (index === -1) return Promise.resolve(null);
+    find: function() {
+      return Promise.resolve([...this.appointments]);
+    },
     
-    appointments[index].status = status;
-    return Promise.resolve(appointments[index]);
-  },
-  
-  delete: (id) => {
-    const index = appointments.findIndex(a => a._id === id);
-    if (index === -1) return Promise.resolve(false);
+    findById: function(id) {
+      const appointment = this.appointments.find(a => a._id === id);
+      return Promise.resolve(appointment || null);
+    },
     
-    appointments.splice(index, 1);
-    return Promise.resolve(true);
-  }
-};
+    create: function(data) {
+      const newAppointment = {
+        _id: (nextId++).toString(),
+        ...data,
+        createdAt: new Date()
+      };
+      
+      this.appointments.push(newAppointment);
+      return Promise.resolve(newAppointment);
+    },
+    
+    findByIdAndDelete: function(id) {
+      const index = this.appointments.findIndex(a => a._id === id);
+      if (index === -1) return Promise.resolve(null);
+      
+      const deleted = this.appointments.splice(index, 1)[0];
+      return Promise.resolve(deleted);
+    }
+  };
+}
 
-module.exports = Appointment;
+module.exports = AppointmentModel;

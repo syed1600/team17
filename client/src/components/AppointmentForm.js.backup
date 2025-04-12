@@ -26,12 +26,12 @@ const AppointmentForm = () => {
     setIsSubmitting(true);
     setSubmitMessage(null);
     
+    // Log the data being sent
     console.log('Submitting form data:', formData);
     
     try {
-      // Use relative URL with proxy
-      console.log('Sending request to API');
-      const response = await fetch('/api/appointments', {
+      console.log('Sending request to:', 'http://localhost:5000/api/appointments');
+      const response = await fetch('http://localhost:5000/api/appointments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,13 +41,13 @@ const AppointmentForm = () => {
       
       console.log('Response status:', response.status);
       
+      // Try to get the response body
       let responseData;
       try {
         responseData = await response.json();
         console.log('Response data:', responseData);
-      } catch (error) {
-        console.error('Error parsing response:', error);
-        responseData = { message: 'Error parsing server response' };
+      } catch (e) {
+        console.error('Error parsing response:', e);
       }
       
       if (response.ok) {
@@ -62,18 +62,14 @@ const AppointmentForm = () => {
           notes: ''
         });
       } else {
-        const errorMsg = responseData.message || t('bookingFailed');
         setSubmitMessage({ 
           type: 'error', 
-          text: `${t('bookingFailed')} ${errorMsg}` 
+          text: responseData?.message || t('bookingFailed') 
         });
       }
     } catch (error) {
       console.error('Network error details:', error);
-      setSubmitMessage({ 
-        type: 'error', 
-        text: `${t('networkError')} ${error.message}` 
-      });
+      setSubmitMessage({ type: 'error', text: t('networkError') + ' ' + error.message });
     } finally {
       setIsSubmitting(false);
     }

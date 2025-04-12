@@ -18,9 +18,8 @@ const AdminLogin = ({ onLogin }) => {
     e.preventDefault();
     setError(null);
     
-    // For local-only development, use hardcoded credentials
-    // In a real app, you would verify against the server
-    if (credentials.username === 'admin' && credentials.password === 'barbershop123') {
+    // Specific credentials as requested
+    if (credentials.username === 'admin' && credentials.password === 'ClientPassword123') {
       onLogin(true);
     } else {
       setError(t('invalidCredentials'));

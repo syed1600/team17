@@ -11,22 +11,45 @@ function AppContent() {
   const [view, setView] = useState('booking'); // 'booking', 'admin-login', or 'admin-dashboard'
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   
-  // Check if admin was previously authenticated
+  // Check if admin was previously authenticated - using sessionStorage instead of localStorage
   useEffect(() => {
-    const authStatus = localStorage.getItem('adminAuthenticated');
+    const authStatus = sessionStorage.getItem('adminAuthenticated');
     if (authStatus === 'true') {
       setIsAdminAuthenticated(true);
+      setView('admin-dashboard');
     }
+  }, []);
+
+  // Set up event listener for page unload
+  useEffect(() => {
+    const handleUnload = () => {
+      // Clear authentication on page close/refresh
+      sessionStorage.removeItem('adminAuthenticated');
+    };
+
+    // Add event listeners
+    window.addEventListener('beforeunload', handleUnload);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+    };
   }, []);
   
   const handleAdminLogin = (status) => {
     setIsAdminAuthenticated(status);
-    localStorage.setItem('adminAuthenticated', status);
+    // Store in sessionStorage (clears when browser tab is closed) rather than localStorage
+    sessionStorage.setItem('adminAuthenticated', status);
+    
+    // Automatically redirect to admin dashboard on successful login
+    if (status) {
+      setView('admin-dashboard');
+    }
   };
   
   const handleLogout = () => {
     setIsAdminAuthenticated(false);
-    localStorage.removeItem('adminAuthenticated');
+    sessionStorage.removeItem('adminAuthenticated');
     setView('booking');
   };
   
