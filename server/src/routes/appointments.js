@@ -8,16 +8,37 @@ router.get('/', async (req, res) => {
     console.log('Getting all appointments');
     const appointments = await Appointment.find().sort({ date: 1 });
     console.log(`Found ${appointments.length} appointments`);
-    
-    // If using Mongoose model, convert to plain objects
-    const plainAppointments = appointments.map(app => 
-      typeof app.toObject === 'function' ? app.toObject() : app
-    );
-    
-    console.log('Sending appointments data');
-    res.json(plainAppointments);
+    res.json(appointments);
   } catch (err) {
     console.error('Error getting appointments:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Check availability
+router.get('/check-availability', async (req, res) => {
+  try {
+    const { date, time } = req.query;
+    
+    if (!date || !time) {
+      return res.status(400).json({ 
+        message: 'Date and time are required parameters' 
+      });
+    }
+    
+    // Find any appointments at the requested date and time
+    const existingAppointment = await Appointment.findOne({
+      date: new Date(date),
+      time: time,
+      status: { $in: ['pending', 'confirmed'] } // Only check pending and confirmed appointments
+    });
+    
+    res.json({ 
+      available: !existingAppointment,
+      message: existingAppointment ? 'Time slot is already booked' : 'Time slot is available'
+    });
+  } catch (err) {
+    console.error('Error checking availability:', err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -51,7 +72,20 @@ router.post('/', async (req, res) => {
       }
     }
     
-    // Create the appointment object
+    // Check if the time slot is already booked
+    const existingAppointment = await Appointment.findOne({
+      date: new Date(req.body.date),
+      time: req.body.time,
+      status: { $in: ['pending', 'confirmed'] }
+    });
+    
+    if (existingAppointment) {
+      return res.status(409).json({ 
+        message: 'This time slot is already booked. Please select a different time.'
+      });
+    }
+    
+    // Create the appointment
     const appointmentData = {
       customerName: req.body.customerName,
       customerEmail: req.body.customerEmail,
@@ -63,13 +97,12 @@ router.post('/', async (req, res) => {
       status: 'pending'
     };
     
-    // Create the appointment
     const newAppointment = await Appointment.create(appointmentData);
     console.log('Created appointment:', newAppointment);
     res.status(201).json(newAppointment);
   } catch (err) {
     console.error('Error creating appointment:', err);
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -83,21 +116,10 @@ router.patch('/:id/status', async (req, res) => {
       return res.status(404).json({ message: 'Appointment not found' });
     }
     
-    if (typeof appointment.status === 'string') {
-      appointment.status = req.body.status;
-      const updatedAppointment = await appointment.save();
-      console.log('Updated appointment:', updatedAppointment);
-      res.json(updatedAppointment);
-    } else {
-      // For in-memory model
-      const updatedAppointment = await Appointment.findByIdAndUpdate(
-        req.params.id, 
-        { status: req.body.status },
-        { new: true }
-      );
-      console.log('Updated appointment:', updatedAppointment);
-      res.json(updatedAppointment);
-    }
+    appointment.status = req.body.status;
+    const updatedAppointment = await appointment.save();
+    console.log('Updated appointment:', updatedAppointment);
+    res.json(updatedAppointment);
   } catch (err) {
     console.error('Error updating appointment:', err);
     res.status(400).json({ message: err.message });
@@ -115,7 +137,7 @@ router.delete('/:id', async (req, res) => {
     }
     
     console.log('Appointment deleted');
-    res.json({ message: 'Appointment deleted' });
+    res.json({ message: 'Appointment deleted successfully' });
   } catch (err) {
     console.error('Error deleting appointment:', err);
     res.status(500).json({ message: err.message });

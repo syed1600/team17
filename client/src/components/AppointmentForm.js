@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const AppointmentForm = () => {
@@ -16,20 +16,73 @@ const AppointmentForm = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+
+  // Generate available time slots from 9am to 5pm
+  useEffect(() => {
+    const slots = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      const formattedHour = hour <= 12 ? hour : hour - 12;
+      const ampm = hour < 12 ? 'AM' : 'PM';
+      slots.push(`${formattedHour}:00 ${ampm}`);
+    }
+    setTimeSlots(slots);
+  }, []);
+
+  // Check availability when date or time changes
+  useEffect(() => {
+    if (formData.date && formData.time) {
+      checkAvailability(formData.date, formData.time);
+    }
+  }, [formData.date, formData.time]);
+
+  const checkAvailability = async (date, time) => {
+    if (!date || !time) return;
+    
+    setIsCheckingAvailability(true);
+    try {
+      const response = await fetch(`/api/appointments/check-availability?date=${date}&time=${time}`);
+      const data = await response.json();
+      
+      if (!data.available) {
+        setSubmitMessage({
+          type: 'warning',
+          text: 'This time slot is already booked. Please select a different time.'
+        });
+      } else {
+        setSubmitMessage(null);
+      }
+    } catch (error) {
+      console.error('Error checking availability:', error);
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear any warning messages when changing date or time
+    if (name === 'date' || name === 'time') {
+      if (submitMessage?.type === 'warning') {
+        setSubmitMessage(null);
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitMessage(null);
     
-    console.log('Submitting form data:', formData);
+    // Don't submit if time slot is unavailable
+    if (submitMessage?.type === 'warning') {
+      return;
+    }
+    
+    setIsSubmitting(true);
     
     try {
-      // Use relative URL with proxy
       console.log('Sending request to API');
       const response = await fetch('/api/appointments', {
         method: 'POST',
@@ -84,7 +137,11 @@ const AppointmentForm = () => {
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">{t('bookYourAppointment')}</h2>
       
       {submitMessage && (
-        <div className={submitMessage.type === 'success' ? 'p-3 mb-4 rounded bg-green-100 text-green-700' : 'p-3 mb-4 rounded bg-red-100 text-red-700'}>
+        <div className={
+          submitMessage.type === 'success' ? 'p-3 mb-4 rounded bg-green-100 text-green-700' : 
+          submitMessage.type === 'warning' ? 'p-3 mb-4 rounded bg-yellow-100 text-yellow-700' :
+          'p-3 mb-4 rounded bg-red-100 text-red-700'
+        }>
           {submitMessage.text}
         </div>
       )}
@@ -183,16 +240,13 @@ const AppointmentForm = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">{t('selectTime')}</option>
-            <option value="9:00 AM">9:00 AM</option>
-            <option value="10:00 AM">10:00 AM</option>
-            <option value="11:00 AM">11:00 AM</option>
-            <option value="12:00 PM">12:00 PM</option>
-            <option value="1:00 PM">1:00 PM</option>
-            <option value="2:00 PM">2:00 PM</option>
-            <option value="3:00 PM">3:00 PM</option>
-            <option value="4:00 PM">4:00 PM</option>
-            <option value="5:00 PM">5:00 PM</option>
+            {timeSlots.map(slot => (
+              <option key={slot} value={slot}>{slot}</option>
+            ))}
           </select>
+          {isCheckingAvailability && (
+            <p className="text-sm text-blue-600 mt-1">Checking availability...</p>
+          )}
         </div>
         
         <div className="mb-6">
@@ -212,8 +266,12 @@ const AppointmentForm = () => {
         
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:bg-blue-300"
+          disabled={isSubmitting || submitMessage?.type === 'warning'}
+          className={`w-full ${
+            isSubmitting || submitMessage?.type === 'warning'
+              ? 'bg-blue-300 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors`}
         >
           {isSubmitting ? t('booking') : t('book')}
         </button>
