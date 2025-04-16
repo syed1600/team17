@@ -16,13 +16,13 @@ const AppointmentForm = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState(null);
-  const [timeSlots, setTimeSlots] = useState([]);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [timeSlots, setTimeSlots] = useState([]);
 
-  // Generate available time slots from 9am to 5pm
+  // Generate available time slots
   useEffect(() => {
     const slots = [];
-    for (let hour = 9; hour <= 17; hour++) {
+    for (let hour = 9; hour <= 16; hour++) {
       const formattedHour = hour <= 12 ? hour : hour - 12;
       const ampm = hour < 12 ? 'AM' : 'PM';
       slots.push(`${formattedHour}:00 ${ampm}`);
@@ -30,47 +30,55 @@ const AppointmentForm = () => {
     setTimeSlots(slots);
   }, []);
 
-  // Check availability when date or time changes
-  useEffect(() => {
-    if (formData.date && formData.time) {
-      checkAvailability(formData.date, formData.time);
-    }
-  }, [formData.date, formData.time]);
-
-  const checkAvailability = async (date, time) => {
-    if (!date || !time) return;
-    
-    setIsCheckingAvailability(true);
-    try {
-      const response = await fetch(`/api/appointments/check-availability?date=${date}&time=${time}`);
-      const data = await response.json();
-      
-      if (!data.available) {
-        setSubmitMessage({
-          type: 'warning',
-          text: 'This time slot is already booked. Please select a different time.'
-        });
-      } else {
-        setSubmitMessage(null);
-      }
-    } catch (error) {
-      console.error('Error checking availability:', error);
-    } finally {
-      setIsCheckingAvailability(false);
-    }
-  };
-
+  // Clear any warning messages when form fields change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
-    // Clear any warning messages when changing date or time
+    // Clear warning messages when date or time changes
     if (name === 'date' || name === 'time') {
       if (submitMessage?.type === 'warning') {
         setSubmitMessage(null);
       }
     }
   };
+
+  // Check availability when both date and time are selected
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!formData.date || !formData.time) return;
+      
+      setIsCheckingAvailability(true);
+      try {
+        const response = await fetch(`/api/appointments/check-availability?date=${formData.date}&time=${formData.time}`);
+        
+        if (!response.ok) {
+          console.error('Error response from availability check:', response.status);
+          return; // Don't show warning if server error
+        }
+        
+        const data = await response.json();
+        
+        if (!data.available) {
+          setSubmitMessage({
+            type: 'warning',
+            text: data.message || 'This time slot is already booked. Please select a different time.'
+          });
+        } else {
+          setSubmitMessage(null);
+        }
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        // Don't show warning on connection error
+      } finally {
+        setIsCheckingAvailability(false);
+      }
+    };
+    
+    // Add a small delay to prevent too many requests
+    const timeoutId = setTimeout(checkAvailability, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.date, formData.time]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,9 +89,9 @@ const AppointmentForm = () => {
     }
     
     setIsSubmitting(true);
+    setSubmitMessage(null);
     
     try {
-      console.log('Sending request to API');
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: {
@@ -92,15 +100,12 @@ const AppointmentForm = () => {
         body: JSON.stringify(formData),
       });
       
-      console.log('Response status:', response.status);
-      
       let responseData;
       try {
         responseData = await response.json();
-        console.log('Response data:', responseData);
       } catch (error) {
         console.error('Error parsing response:', error);
-        responseData = { message: 'Error parsing server response' };
+        responseData = { message: 'Error processing server response' };
       }
       
       if (response.ok) {
