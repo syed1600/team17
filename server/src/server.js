@@ -13,35 +13,31 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Debug middleware
+// Debug middleware to log requests
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
 
-// In-memory storage as fallback
-const inMemoryDB = {
-  appointments: []
-};
+// Connect to MongoDB
+console.log('Connecting to MongoDB...');
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://admin:admin@4375.gmcyepa.mongodb.net/barbershop?retryWrites=true&w=majority';
 
-// MongoDB connection with improved options
-const connectDB = async () => {
-  try {
-    // Use better connection options
-    await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-      socketTimeoutMS: 45000, // Socket timeout
-      connectTimeoutMS: 10000, // Connection timeout
-    });
-    console.log('MongoDB connected');
-    return true;
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
-    return false;
-  }
-};
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log('Connected to MongoDB successfully');
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+});
 
-// Import routes
+// Import routes after establishing database connection
 const appointmentRoutes = require('./routes/appointments');
 
 // Routes
@@ -51,27 +47,18 @@ app.use('/api/appointments', appointmentRoutes);
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Barbershop booking API is running',
-    database: mongoose.connection.readyState === 1 ? 'MongoDB' : 'In-memory'
+    dbConnected: mongoose.connection.readyState === 1
   });
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
 // Start server
-const startServer = async () => {
-  // Try to connect to MongoDB
-  const isConnected = await connectDB();
-  
-  if (!isConnected) {
-    console.log('Using in-memory database as fallback');
-  }
-  
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Using database: ${mongoose.connection.readyState === 1 ? 'MongoDB' : 'In-memory'}`);
-  });
-};
-
-// Export for use in other files
-module.exports = { inMemoryDB };
-
-// Start the server
-startServer();
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`MongoDB connection state: ${mongoose.connection.readyState}`);
+});
