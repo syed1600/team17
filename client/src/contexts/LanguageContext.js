@@ -8,6 +8,7 @@ const translations = {
     adminDashboard: 'Admin Dashboard',
     logout: 'Logout',
     adminLogin: 'Admin Login',
+    barbershopAppointments: 'Barbershop Appointments',
     
     // Booking Form
     bookYourAppointment: 'Book Your Appointment',
@@ -55,6 +56,12 @@ const translations = {
     decline: 'Decline',
     delete: 'Delete',
     loading: 'Loading appointments...',
+    totalAppointments: 'Total Appointments',
+    pendingAppointments: 'Pending Appointments',
+    todaysAppointments: 'Today\'s Appointments',
+    viewNotes: 'View Notes',
+    hideNotes: 'Hide Notes',
+    noNotes: 'No notes',
     
     // Footer
     copyright: '© 2025 Barbershop Booking. All rights reserved.',
@@ -69,6 +76,7 @@ const translations = {
     adminDashboard: 'Panel de Administración',
     logout: 'Cerrar Sesión',
     adminLogin: 'Acceso Admin',
+    barbershopAppointments: 'Citas de Barbería',
     
     // Booking Form
     bookYourAppointment: 'Reserve Su Cita',
@@ -116,6 +124,12 @@ const translations = {
     decline: 'Rechazar',
     delete: 'Eliminar',
     loading: 'Cargando citas...',
+    totalAppointments: 'Total de Citas',
+    pendingAppointments: 'Citas Pendientes',
+    todaysAppointments: 'Citas de Hoy',
+    viewNotes: 'Ver Notas',
+    hideNotes: 'Ocultar Notas',
+    noNotes: 'Sin notas',
     
     // Footer
     copyright: '© 2025 Barbershop Booking. Todos los derechos reservados.',

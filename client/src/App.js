@@ -65,7 +65,7 @@ function AppContent() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-blue-600 text-white shadow">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
-          <h1 className="text-2xl font-bold">Barbershop Appointments</h1>
+          <h1 className="text-2xl font-bold">{t('barbershopAppointments')}</h1>
           
           <div className="flex items-center mt-2 md:mt-0">
             {/* Language Toggle Button */}

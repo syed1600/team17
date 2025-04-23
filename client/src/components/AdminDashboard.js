@@ -179,15 +179,15 @@ const AdminDashboard = () => {
       {/* Dashboard Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg shadow border border-blue-100">
-          <h3 className="text-lg font-semibold text-blue-800">Total Appointments</h3>
+          <h3 className="text-lg font-semibold text-blue-800">{t('totalAppointments')}</h3>
           <p className="text-3xl font-bold text-blue-600">{appointments.length}</p>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg shadow border border-yellow-100">
-          <h3 className="text-lg font-semibold text-yellow-800">Pending Appointments</h3>
+          <h3 className="text-lg font-semibold text-yellow-800">{t('pendingAppointments')}</h3>
           <p className="text-3xl font-bold text-yellow-600">{pendingCount}</p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg shadow border border-green-100">
-          <h3 className="text-lg font-semibold text-green-800">Today's Appointments</h3>
+          <h3 className="text-lg font-semibold text-green-800">{t('todaysAppointments')}</h3>
           <p className="text-3xl font-bold text-green-600">{todayCount}</p>
         </div>
       </div>
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
                             onClick={() => toggleNotes(appointment._id)}
                             className="text-blue-600 hover:text-blue-800 text-sm underline flex items-center"
                           >
-                            {expandedNotes === appointment._id ? 'Hide Notes' : 'View Notes'}
+                            {expandedNotes === appointment._id ? t('hideNotes') : t('viewNotes')}
                           </button>
                           {expandedNotes === appointment._id && (
                             <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
@@ -265,7 +265,7 @@ const AdminDashboard = () => {
                           )}
                         </div>
                       ) : (
-                        <span className="text-gray-400 text-sm">No notes</span>
+                        <span className="text-gray-400 text-sm">{t('noNotes')}</span>
                       )}
                     </td>
                     <td className="py-3 px-4">
