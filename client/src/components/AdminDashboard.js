@@ -10,10 +10,12 @@ const AdminDashboard = () => {
   const [filter, setFilter] = useState('all');
   const [todayCount, setTodayCount] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
+  const [expandedNotes, setExpandedNotes] = useState(null);
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [retryCount]);
 
   const fetchAppointments = async () => {
     try {
@@ -23,10 +25,8 @@ const AdminDashboard = () => {
       console.log('Fetching appointments...');
       const response = await fetch('/api/appointments');
       
-      console.log('Response status:', response.status);
-      
       if (!response.ok) {
-        throw new Error(`Failed to fetch appointments: ${response.status} ${response.statusText}`);
+        throw new Error(`Server error: ${response.status}`);
       }
       
       const data = await response.json();
@@ -40,8 +40,12 @@ const AdminDashboard = () => {
       // Count today's appointments
       const today = new Date().toISOString().split('T')[0];
       const todayAppts = appointmentsArray.filter(apt => {
-        const aptDate = new Date(apt.date).toISOString().split('T')[0];
-        return aptDate === today;
+        try {
+          const aptDate = new Date(apt.date).toISOString().split('T')[0];
+          return aptDate === today;
+        } catch (e) {
+          return false;
+        }
       });
       setTodayCount(todayAppts.length);
 
@@ -68,7 +72,7 @@ const AdminDashboard = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to update status: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to update status: ${response.status}`);
       }
       
       // Update appointment in local state
@@ -77,7 +81,7 @@ const AdminDashboard = () => {
       ));
 
       // Update pending count
-      if (newStatus !== 'pending' || appointments.find(apt => apt._id === id).status === 'pending') {
+      if (newStatus !== 'pending' || appointments.find(apt => apt._id === id)?.status === 'pending') {
         const newPendingCount = appointments.filter(apt => 
           apt._id === id ? newStatus === 'pending' : apt.status === 'pending'
         ).length;
@@ -101,7 +105,7 @@ const AdminDashboard = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Failed to delete appointment: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to delete appointment: ${response.status}`);
       }
       
       // Get the appointment before removing it
@@ -111,20 +115,26 @@ const AdminDashboard = () => {
       setAppointments(appointments.filter(apt => apt._id !== id));
       
       // Update counts if needed
-      if (appointment.status === 'pending') {
-        setPendingCount(pendingCount - 1);
+      if (appointment?.status === 'pending') {
+        setPendingCount(prev => prev - 1);
       }
       
       const today = new Date().toISOString().split('T')[0];
-      const aptDate = new Date(appointment.date).toISOString().split('T')[0];
-      if (aptDate === today) {
-        setTodayCount(todayCount - 1);
+      if (appointment?.date) {
+        const aptDate = new Date(appointment.date).toISOString().split('T')[0];
+        if (aptDate === today) {
+          setTodayCount(prev => prev - 1);
+        }
       }
       
     } catch (err) {
       console.error('Error deleting appointment:', err);
       alert(`Failed to delete appointment: ${err.message}`);
     }
+  };
+
+  const toggleNotes = (id) => {
+    setExpandedNotes(expandedNotes === id ? null : id);
   };
 
   const filteredAppointments = filter === 'all' 
@@ -137,7 +147,7 @@ const AdminDashboard = () => {
       return new Date(dateString).toLocaleDateString(undefined, options);
     } catch (err) {
       console.error('Error formatting date:', err);
-      return dateString;
+      return dateString || 'Invalid date';
     }
   };
 
@@ -155,7 +165,7 @@ const AdminDashboard = () => {
         <p className="font-bold">Error:</p>
         <p>{error}</p>
         <button 
-          onClick={fetchAppointments}
+          onClick={() => setRetryCount(prev => prev + 1)}
           className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
         >
           {t('refresh')}
@@ -199,7 +209,7 @@ const AdminDashboard = () => {
               <option value="cancelled">{t('cancelled')}</option>
             </select>
             <button 
-              onClick={fetchAppointments}
+              onClick={() => setRetryCount(prev => prev + 1)}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               {t('refresh')}
@@ -219,6 +229,7 @@ const AdminDashboard = () => {
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('customer')}</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('service')}</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('dateTime')}</th>
+                  <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('notes')}</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('status')}</th>
                   <th className="py-3 px-4 text-left font-semibold text-gray-600">{t('actions')}</th>
                 </tr>
@@ -237,6 +248,25 @@ const AdminDashboard = () => {
                     <td className="py-3 px-4">
                       <div className="font-medium">{formatDate(appointment.date)}</div>
                       <div className="text-sm text-gray-500">{appointment.time}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      {appointment.notes ? (
+                        <div>
+                          <button 
+                            onClick={() => toggleNotes(appointment._id)}
+                            className="text-blue-600 hover:text-blue-800 text-sm underline flex items-center"
+                          >
+                            {expandedNotes === appointment._id ? 'Hide Notes' : 'View Notes'}
+                          </button>
+                          {expandedNotes === appointment._id && (
+                            <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                              {appointment.notes}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">No notes</span>
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
